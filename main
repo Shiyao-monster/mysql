@@ -1,0 +1,41 @@
+cul sum （前提是必须要2个colums, order by & subsum）
+
+        SET @csum := 0;
+        SELECT 日期, 净利润, (@csum := @csum + 净利润) AS 累计利润
+        FROM daily_pnl_view;
+
+        sum(games_played) OVER(partition by player_id order by event_date)  
+
+
+生成连续数列 （1，2，3）
+        Select row_number() OVER (Order by c1)  From 
+        (Select (IF (id is not null,1,0 )) as c1
+        From tree) tb1
+
+找到连续的符合要求的值： 重点， distinct, OR
+        Select Distinct t1.id, t1.visit_date, t1.people
+        From Stadium t1, Stadium t2, Stadium t3
+        Where (t1.people >= 100 AND t2.people >=100 AND t3.people >= 100)
+        AND ( (t1.id + 1 = t2.id AND t2.id + 1 = t3.id) OR (t1.id = t2.id + 1 AND t1.id + 1 = t3.id) OR 
+        (t1.id = t2.id + 2 AND t1.id = t3.id + 1) )
+        Order by  t1.id
+        
+        
+        
+        
+Union    union 之间没有把select .. 命名
+      With tb as 
+
+      (select id, 'ROOT' as Type from tree
+      where p_id is null
+      union
+      select id,'Leaf' as Type from tree
+      where id not in (select p_id from tree where p_id is not null)
+      union
+      select id, 'Inner' as Type from tree
+      where id in (select p_id from tree where p_id is not null)
+      and p_id is not null)
+      
+      
+      
+      
