@@ -7,11 +7,24 @@ cul sum （前提是必须要2个colums, order by & subsum）
         sum(games_played) OVER(partition by player_id order by event_date)  
 
 
-生成连续数列 （1，2，3）
+生成连续数列 (1,2,3)
         Select row_number() OVER (Order by c1)  From 
         (Select (IF (id is not null,1,0 )) as c1
         From tree) tb1
-
+        
+        with recursive month_2020 as
+        (select 1 as month union all 
+        select month+1 from month_2020 where month<12)
+        
+        (select1asmonth)
+        union
+        (select 2 as month)
+        union (select3 as month)
+        
+        SET @rownum := 0;  //SET @var1 := 0, @var2 :=0; 中间用,
+        SELECT actor_id, @rownum := @rownum + 1 AS rownum
+        FROM actor order by actor_id LIMIT 3;
+        
 找到连续的符合要求的值： 重点， distinct, OR
         Select Distinct t1.id, t1.visit_date, t1.people
         From Stadium t1, Stadium t2, Stadium t3
@@ -23,7 +36,7 @@ cul sum （前提是必须要2个colums, order by & subsum）
         
         
         
-Union    union 之间没有把select .. 命名
+Union    union 之间没有把select .. 命名, 如果select 有order,则可( order by) union ()
       With tb as 
 
       (select id, 'ROOT' as Type from tree
@@ -36,6 +49,267 @@ Union    union 之间没有把select .. 命名
       where id in (select p_id from tree where p_id is not null)
       and p_id is not null)
       
+      Union会消除重复UnionAll不会
       
       
       
+ 聚类函数用法
+
+
+        group by a having salary < max(salary)
+        where salary < (select max(salary) from xxx)
+        
+        两个aggragation 不能连用： eg:max(count(nums))
+        
+        如果是类似
+        select a, b from table group by a having min(c);    
+        b其实是随机返回的值并不是像我们想的那样返回
+        同理select a, min(b), c, d, from table group by a并不能保证cd的一一对应关系
+        则需要用另一个select , where in
+        
+        总结
+        除非最终结果需要select agg
+        但凡要取 agg， rank的同行值，或者在if,case 中， max(count)中
+        先写with tb as  (select..)
+        
+        当groupby使用aggregation不现实的时候改成window函数partitionby
+        
+        
+
+
+ null相关
+
+        - isnull ifnull nullif 区别：isnull(xxx) 返回0或1； 
+          ifnull(e1, e2)   如果e1是null返回e2； 
+          nullif(e1,e2)比较e1和e2是否相等，如果等返回null，不等返回e1
+        - where xx is not null
+        
+        
+ date
+         -给定日期"2013-10-01"选取年月
+         date_format(order_date'%Y-%m')as'month' = left(order_date7) = substring(date17)
+         -DATEDIFF(end_datestart_date)是end_date-start_date
+         -date_column+/-interval n day       DATE_ADD(w1.recordDate, INTERVAL -1 DAY/Week)
+         -SELECT SYSDATE()    获取系统时间
+
+
+Case  
+         case sex when'1' then'男'
+                  when'2'then'女’
+                  else'其他'end;
+          == (IF(sex=1,男，IF（sex=2,女,其他）))      
+ 
+ 
+ like 正则表达式
+
+        xxx like "% xxx%"
+        
+        查找name字段中以'st'为开头的所有数据：
+        SELECT name FROM person_tbl WHERE name REGEXP '^st';
+        查找name字段中以'ok'为结尾的所有数据：
+        SELECT name FROM person_tbl WHERE name REGEXP 'ok$';
+        查找name字段中包含'mar'字符串的所有数据：like
+        SELECT name FROM person_tbl WHERE name REGEXP 'mar';
+        查找name字段中以元音字符开头或以'ok'字符串结尾的所有数据：
+        SELECT name FROM person_tbl WHERE name REGEXP '^[aeiou]|ok$';
+ 
+ 
+group_concat(distinct product order by product seperator ";") as products
+
+        把group之后所有里面的元素连起来
+ 
+ 
+ update
+
+        update table set column = value, column2 = value2 where xxxxx
+        
+        Update Salary
+        Set sex = 
+        (case sex when 'f' then 'm' else 'f' end)
+
+
+几个常用函数
+
+        trim , upper , lower , left , right , substring , length , concat 组合可以得到首字母大写
+        CEILING() - 返回最小的整数，使这个整数大于或等于指定数的数值运算。
+　　     FLOOR() - 返回最大整数，使这个整数小于或等于指定数的数值运算。
+
+count (1) = count(*)
+
+
+join ... on (xx or xx)
+
+        这是一个很神奇的用法，可以join两次
+
+mysql没有full join
+
+        用两次select并且union
+
+
+
+# 窗口函数的特殊用法 window function
+
+                lead(column, offset, default) 从当前的下面
+
+                lag(column, offset, default) 从当前的上面
+
+                order by 之后的不完整偏移量用法：
+
+                rows between 1 preceding and 0 following
+
+                rows unbounded preceding
+
+                RANGE BETWEEN unbounded preceding AND CURRENT ROW
+
+                range between interval 2 day preceding and interval 2 day following
+
+                window 函数的考法非常多，另外一种考法就是和group by互换。能用上rows的就是非常难的题目了
+
+                一般考的全是rank sum count
+
+                难一点就考lead 考连续值
+
+                虽然连续两个sum不合法，但是sum(sum(amount)) over (order by visited_on rows 6 preceding)是合法的
+
+                log 用法eg：求一个人是否连续五天登陆，log(date, 4) in column 或者 date, rank() 并且count(1) > 4 再 date - rank  in column
+
+                把window 当aggragation用 sum() over (什么都不写)
+
+
+自定义变量 可以不用set
+
+                Select 
+                (case when s.continent='America'then@r1:=@r1+1
+                      when scontinent='Europe'then@r2:=@r2+1 end)
+                as row_id
+                from students, (select@r1:=0,@r2:=0)t
+                
+
+delete 
+                DELETE p1 FROM Person p1, Person P2
+                WHERE p1.Email = p2.Email AND p1.Id > P2.Id
+                
+                
+                DELETE FROM MATCHES
+                WHERE playerno = p_playerno;
+                
+                
+存储过程与函数的区别
+                  本质上没区别，执行的本质都一样。
+                  只是函数有如：只能返回一个变量的限制。而存储过程可以返回多个或者0个。
+                // function
+                DELIMITER $$
+                DROP FUNCTION IF EXISTS genPerson$$
+                CREATE FUNCTION genPerson(name varchar(20)) RETURNS varchar(50)
+                BEGIN
+                  DECLARE str VARCHAR(50) DEFAULT '';
+                  SET @tableName=name;
+                  RETURN(SELECT CONCAT('employee name:',employee_name,'---','salary: ',employee_salary) FROM employees WHERE employee_id=id);
+                END $$
+                DELIMITER ;
+                
+                SELECT GetEmployeeInformationByID(1);
+                
+                // Procedure
+                
+                存储过程体包含了在过程调用时必须执行的语句，例如：dml(增删改)、ddl语句(增加表，定义)，if-then-else和while-do语句、声明变量的declare语句等
+                
+                存储过程可以有0个或多个参数，用于存储过程的定义。
+
+                  IN输入参数：表示调用者向过程传入值（传入值可以是字面量或变量）
+
+                  OUT输出参数：表示过程向调用者传出值(可以返回多个值)（传出值只能是变量）
+
+                  INOUT输入输出参数：将传入值改变并传出（值只能是变量）
+            
+                       delimiter $$
+                       create procedure in_param(in p_in int)
+                       begin
+                       select p_in;
+                       set p_in=2;
+                       select P_in;
+                       end$$
+                       delimiter ;
+
+                       set @p_in=1;
+
+                       call in_param(@p_in);
+
+
+while loop repeat, cursor   use at procedure, function
+                https://www.cnblogs.com/Luouy/p/7301360.html
+               
+                
+Set and declare   set @var 才是全局变量，  Set var = .. 是对已有的数据赋值
+                1、declare定义的变量类似java类中的局部变量，仅在方法中生效。即只在存储过程中的begin和end之间生效。
+                2、@set定义的变量，是全局变量
+
+                DROP PROCEDURE IF EXISTS temp;
+                DELIMITER //
+                CREATE PROCEDURE temp()
+                BEGIN
+                    DECLARE a INT DEFAULT 1;
+
+                    SET a=a+1;
+                    SET @b=@b+1;
+                    SELECT a,@b;
+
+                END
+                //
+                DELIMITER ; 
+
+                Set @b = 1
+                Call temp()
+
+                结果，a =2, b 一直增加
+  
+  
+创建数据库，表
+
+                create database hr;
+                use hr;
+
+                create table employees
+                (
+                        employee_id int(11) primary key not null auto_increment,
+                        employee_name varchar(50) not null,
+                        employee_sex varchar(10) default '男',
+                        hire_date datetime not null default current_timestamp,
+                        employee_mgr int(11),
+                        employee_salary float default 3000,
+                        department_id int(11)
+                );
+
+                insert into employees(employee_name,employee_sex,employee_mgr,employee_salary,department_id) values ('David Tian','男',10,7500,1);
+
+
+
+window function vs group by
+                3 window function : rank(), dense_rank(), row_number() ()里不填， OVER (Partition by 选填 Order by 必填
+                Aggration with OVER: sum(填)， max(填)，。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。
+
+                partitoin by 不会改变表的行数
+                group by 会减少表的行数
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
