@@ -87,7 +87,7 @@ Union    union 之间没有把select .. 命名, 如果select 有order,则可( or
         
  date
          -给定日期"2013-10-01"选取年月
-         date_format(order_date'%Y-%m')as'month' = left(order_date7) = substring(date17)
+         date_format(order_date,'%Y-%m')as'month' = left(order_date7) = substring(date17)
          -DATEDIFF(end_datestart_date)是end_date-start_date
          -date_column+/-interval n day       DATE_ADD(w1.recordDate, INTERVAL -1 DAY/Week)
          -SELECT SYSDATE()    获取系统时间
