@@ -287,6 +287,8 @@ Set and declare   set @var 才是全局变量，  Set var = .. 是对已有的�
 window function vs group by
                 3 window function : rank(), dense_rank(), row_number() ()里不填， OVER (Partition by 选填 Order by 必填
                 Aggration with OVER: sum(填)， max(填)，。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。
+                * sum, count, avg, 遇到null,则选择忽略，Number+null =null  null无法与其他数值比较
+                解决方法：sum(IFNULL(cnt,0))
 
                 partitoin by 不会改变表的行数
                 group by 会减少表的行数
